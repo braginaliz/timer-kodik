@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таймер обратного отсчета</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .timer {
+            font-size: 5em;
+            font-weight: bold;
+            color: #2575fc;
+            margin: 30px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            min-width: 120px;
+        }
+        
+        #startBtn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        #pauseBtn {
+            background: #FF9800;
+            color: white;
+        }
+        
+        #resetBtn {
+            background: #f44336;
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .message {
+            margin-top: 25px;
+            font-size: 1.2em;
+            color: #666;
+            height: 30px;
+        }
+        
+        @media (max-width: 600px) {
+            .timer {
+                font-size: 3.5em;
+            }
+            
+            button {
+                padding: 12px 25px;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏰ Таймер обратного отсчета</h1>
+        <div class="timer" id="timer">05:00</div>
+        <div class="controls">
+            <button id="startBtn">Старт</button>
+            <button id="pauseBtn">Пауза</button>
+            <button id="resetBtn">Сброс</button>
+        </div>
+        <div class="message" id="message">Готов к запуску!</div>
+    </div>
+
+    <script>
+        // Инициализация переменных
+        let totalSeconds = 300; // 5 минут
+        let timerInterval = null;
+        let isRunning = false;
+        
+        // Получаем элементы DOM
+        const timerElement = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const messageElement = document.getElementById('message');
+        
+        // Функция обновления таймера
+        function updateTimer() {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            
+            // Форматирование в MM:SS
+            timerElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Изменение цвета при низком времени
+            if (totalSeconds <= 30) {
+                timerElement.style.color = '#f44336';
+            } else if (totalSeconds <= 60) {
+                timerElement.style.color = '#FF9800';
+            } else {
+                timerElement.style.color = '#2575fc';
+            }
+        }
+        
+        // Функция запуска таймера
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            messageElement.textContent = "Таймер запущен!";
+            messageElement.style.color = "#4CAF50";
+            
+            timerInterval = setInterval(() => {
+                if (totalSeconds > 0) {
+                    totalSeconds--;
+                    updateTimer();
+                } else {
+                    stopTimer();
+                    messageElement.textContent = "⏰ Время вышло! Таймер завершен.";
+                    messageElement.style.color = "#f44336";
+                    
+                    // Воспроизведение звукового сигнала (опционально)
+                    playBeep();
+                }
+            }, 1000);
+        }
+        
+        // Функция паузы
+        function pauseTimer() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            clearInterval(timerInterval);
+            messageElement.textContent = "Таймер на паузе";
+            messageElement.style.color = "#FF9800";
+        }
+        
+        // Функция сброса
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            totalSeconds = 300;
+            updateTimer();
+            messageElement.textContent = "Таймер сброшен. Готов к запуску!";
+            messageElement.style.color = "#666";
+            timerElement.style.color = "#2575fc";
+        }
+        
+        // Простой звуковой сигнал
+        function playBeep() {
+            try {
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = context.createOscillator();
+                const gainNode = context.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(context.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+                
+                oscillator.start(context.currentTime);
+                oscillator.stop(context.currentTime + 0.5);
+            } catch (e) {
+                console.log("Звук не поддерживается в этом браузере");
+            }
+        }
+        
+        // Назначаем обработчики событий
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        
+        // Добавляем управление с клавиатуры
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    if (isRunning) pauseTimer();
+                    else startTimer();
+                    break;
+                case 'KeyS':
+                    startTimer();
+                    break;
+                case 'KeyP':
+                    pauseTimer();
+                    break;
+                case 'KeyR':
+                    resetTimer();
+                    break;
+            }
+        });
+        
+        // Инициализация при загрузке
+        updateTimer();
+        
+        // Информация об управлении
+        console.log("Управление таймером:");
+        console.log("Пробел - Старт/Пауза");
+        console.log("S - Старт");
+        console.log("P - Пауза");
+        console.log("R - Сброс");
+    </script>
+</body>
+</html>
